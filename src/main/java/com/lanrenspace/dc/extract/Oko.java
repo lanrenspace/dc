@@ -3,15 +3,18 @@ package com.lanrenspace.dc.extract;
 import com.lanrenspace.dc.entity.Odds;
 import com.lanrenspace.dc.entity.OddsChangeDetail;
 import com.lanrenspace.dc.model.OddChangePlatform;
+import com.lanrenspace.dc.service.IProxyService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -28,11 +31,6 @@ public class Oko {
 
     private static final List<String> xspfTypes = Arrays.asList("xinsheng", "xinping", "xinfu");
 
-    public static void main(String[] args) {
-        oddsExtract("1208532");
-    }
-
-
     /**
      * odd change detail 提取
      *
@@ -40,10 +38,10 @@ public class Oko {
      * @param matchId        场次ID
      * @return 变化详情
      */
-    public static List<OddsChangeDetail> oddsChangeDetailExtract(String matchId, OddChangePlatform changePlatform) {
+    public static List<OddsChangeDetail> oddsChangeDetailExtract(String matchId, OddChangePlatform changePlatform, Proxy proxy) {
         List<OddsChangeDetail> resultList = new ArrayList<>();
         try {
-            String context = execExtract("http://wx.m.okooo.com/match/change.php?mid=" + matchId + "&pid=" + changePlatform.getCode() + "&Type=odds");
+            String context = execExtract("http://wx.m.okooo.com/match/change.php?mid=" + matchId + "&pid=" + changePlatform.getCode() + "&Type=odds", proxy);
             Document doc = Jsoup.parse(context);
             Elements tbodyElements = doc.getElementsByClass("changeTable").get(0).getElementsByTag("tbody").get(0).children();
             for (Element tbodyElement : tbodyElements) {
@@ -98,10 +96,10 @@ public class Oko {
      * @param matchId 场次
      * @return change platform 数据
      */
-    public static List<OddChangePlatform> oddChangePlatformExtract(String matchId) {
+    public static List<OddChangePlatform> oddChangePlatformExtract(String matchId, Proxy proxy) {
         List<OddChangePlatform> resultList = new ArrayList<>();
         try {
-            String context = execExtract("http://wx.m.okooo.com/match/change.php?mid=1208532&pid=2&Type=odds");
+            String context = execExtract("http://wx.m.okooo.com/match/change.php?mid=" + matchId + "&pid=2&Type=odds", proxy);
             Document doc = Jsoup.parse(context);
             Elements changeMenu = doc.getElementsByClass("changeMenu").get(0).children();
             for (Element menu : changeMenu) {
@@ -124,11 +122,11 @@ public class Oko {
      * @param matchId 场次
      * @return ood数据
      */
-    public static List<Odds> oddsExtract(String matchId) {
+    public static List<Odds> oddsExtract(String matchId, Proxy proxy) {
         List<Odds> resultList = new ArrayList<>();
         try {
             URL url = new URL("http://wx.m.okooo.com/match/odds.php?MatchID=" + matchId + "&from=%2Fweixin%2Fjing%2F");
-            URLConnection conn = url.openConnection();
+            URLConnection conn = url.openConnection(proxy);
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1");
             conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
 //            conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
@@ -263,9 +261,9 @@ public class Oko {
      * @param path 请求地址
      * @return html内容
      */
-    private static String execExtract(String path) throws IOException {
+    private static String execExtract(String path, Proxy proxy) throws IOException {
         URL url = new URL(path);
-        URLConnection conn = url.openConnection();
+        URLConnection conn = url.openConnection(proxy);
         conn.setRequestProperty("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1");
         conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
 //            conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
